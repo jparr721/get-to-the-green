@@ -429,7 +429,10 @@ function Chicken() {
 
   const body = new THREE.Mesh(
     new THREE.BoxBufferGeometry(15 * zoom, 9 * zoom, 18 * zoom),
-    new THREE.MeshPhongMaterial({ color: 0x00356b, flatShading: true })
+    new THREE.MeshPhongMaterial({
+      color: getRandomHexColor(),
+      flatShading: true,
+    })
   );
   body.position.z = 22 * zoom;
   body.castShadow = true;
