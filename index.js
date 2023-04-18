@@ -161,6 +161,29 @@ function getRandomHexColor() {
   return HexValue;
 }
 
+function getRandomSkinToneColor() {
+  // Define the possible range of skin tones in RGB format
+  var skinTones = [
+    [255, 200, 150], // Lighter
+    [250, 190, 140],
+    [235, 170, 120],
+    [220, 130, 100], // Medium
+    [180, 100, 80],
+    [140, 70, 50],
+    [100, 40, 20], // Darker
+  ];
+
+  // Choose a random skin tone from the range
+  var tone = skinTones[Math.floor(Math.random() * skinTones.length)];
+
+  // Convert the RGB values to a hex string
+  var hexString = ((1 << 24) + (tone[0] << 16) + (tone[1] << 8) + tone[2])
+    .toString(16)
+    .slice(1);
+
+  return parseInt(hexString, 16);
+}
+
 function Texture(width, height, rects) {
   const canvas = document.createElement("canvas");
   canvas.width = width;
@@ -182,67 +205,6 @@ function Wheel() {
   );
   wheel.position.z = 6 * zoom;
   return wheel;
-}
-
-function Car() {
-  const car = new THREE.Group();
-  const color =
-    vechicleColors[Math.floor(Math.random() * vechicleColors.length)];
-
-  const main = new THREE.Mesh(
-    new THREE.BoxBufferGeometry(60 * zoom, 30 * zoom, 15 * zoom),
-    new THREE.MeshPhongMaterial({ color, flatShading: true })
-  );
-  main.position.z = 12 * zoom;
-  main.castShadow = true;
-  main.receiveShadow = true;
-  car.add(main);
-
-  const cabin = new THREE.Mesh(
-    new THREE.BoxBufferGeometry(33 * zoom, 24 * zoom, 12 * zoom),
-    [
-      new THREE.MeshPhongMaterial({
-        color: 0xcccccc,
-        flatShading: true,
-        map: carBackTexture,
-      }),
-      new THREE.MeshPhongMaterial({
-        color: 0xcccccc,
-        flatShading: true,
-        map: carFrontTexture,
-      }),
-      new THREE.MeshPhongMaterial({
-        color: 0xcccccc,
-        flatShading: true,
-        map: carRightSideTexture,
-      }),
-      new THREE.MeshPhongMaterial({
-        color: 0xcccccc,
-        flatShading: true,
-        map: carLeftSideTexture,
-      }),
-      new THREE.MeshPhongMaterial({ color: 0xcccccc, flatShading: true }), // top
-      new THREE.MeshPhongMaterial({ color: 0xcccccc, flatShading: true }), // bottom
-    ]
-  );
-  cabin.position.x = 6 * zoom;
-  cabin.position.z = 25.5 * zoom;
-  cabin.castShadow = true;
-  cabin.receiveShadow = true;
-  car.add(cabin);
-
-  const frontWheel = new Wheel();
-  frontWheel.position.x = -18 * zoom;
-  car.add(frontWheel);
-
-  const backWheel = new Wheel();
-  backWheel.position.x = 18 * zoom;
-  car.add(backWheel);
-
-  car.castShadow = true;
-  car.receiveShadow = false;
-
-  return car;
 }
 
 function BuildingLeft() {
@@ -273,6 +235,17 @@ function BuildingLeft() {
 function VanderbiltHall() {
   const vanderbiltHall = new THREE.Group();
 
+  const textureLoader = new THREE.TextureLoader();
+  const texture = textureLoader.load("brick.jpeg");
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(1, 1);
+
+  const vanderbiltTexture = textureLoader.load("vanderbilt.jpeg");
+  vanderbiltTexture.wrapS = THREE.RepeatWrapping;
+  vanderbiltTexture.wrapT = THREE.RepeatWrapping;
+  vanderbiltTexture.repeat.set(1, 1);
+
   // Hex color for a light brown
   const lightBrown = 0x8b4513;
 
@@ -289,14 +262,20 @@ function VanderbiltHall() {
 
   // Create the base of the building
   var baseGeometry = new THREE.BoxGeometry(width, depth, width);
-  var baseMaterial = new THREE.MeshPhongMaterial({ color: lightBrown });
+  var baseMaterial = new THREE.MeshPhongMaterial({
+    color: 0xffffff,
+    map: vanderbiltTexture,
+  });
   var base = new THREE.Mesh(baseGeometry, baseMaterial);
   base.position.y = depth / 2;
   building.add(base);
 
   // Create the main part of the building
   var mainGeometry = new THREE.BoxGeometry(width, height, depth);
-  var mainMaterial = new THREE.MeshPhongMaterial({ color: lightBlue });
+  var mainMaterial = new THREE.MeshPhongMaterial({
+    color: 0xffffff,
+    map: texture,
+  });
   var main = new THREE.Mesh(mainGeometry, mainMaterial);
   main.position.y = depth + height / 2;
   main.position.z = height / 2;
@@ -304,7 +283,10 @@ function VanderbiltHall() {
 
   // Create a roof for the building
   var roofGeometry = new THREE.BoxGeometry(width, depth, width);
-  var roofMaterial = new THREE.MeshPhongMaterial({ color: lightBrown });
+  var roofMaterial = new THREE.MeshPhongMaterial({
+    color: 0xffffff,
+    map: vanderbiltTexture,
+  });
   var roof = new THREE.Mesh(roofGeometry, roofMaterial);
   roof.position.y = depth + height * 1.25;
   building.add(roof);
@@ -339,16 +321,20 @@ function Professor() {
 
   const body = new THREE.Mesh(
     new THREE.BoxBufferGeometry(15 * zoom, 9 * zoom, 18 * zoom),
-    new THREE.MeshPhongMaterial({ color: 0x00356b, flatShading: true })
+    new THREE.MeshPhongMaterial({
+      color: getRandomHexColor(),
+      flatShading: true,
+    })
   );
   body.position.z = 22 * zoom;
   body.castShadow = true;
   body.receiveShadow = true;
   chicken.add(body);
 
+  const armColor = getRandomSkinToneColor();
   const leftArm = new THREE.Mesh(
     new THREE.BoxBufferGeometry(4 * zoom, 4 * zoom, 11 * zoom),
-    new THREE.MeshPhongMaterial({ color: 0x00356b, flatShading: true })
+    new THREE.MeshPhongMaterial({ color: armColor, flatShading: true })
   );
   leftArm.position.z = 25 * zoom;
   leftArm.position.x = -9 * zoom;
@@ -358,7 +344,7 @@ function Professor() {
 
   const rightArm = new THREE.Mesh(
     new THREE.BoxBufferGeometry(4 * zoom, 4 * zoom, 11 * zoom),
-    new THREE.MeshPhongMaterial({ color: 0x00356b, flatShading: true })
+    new THREE.MeshPhongMaterial({ color: armColor, flatShading: true })
   );
   rightArm.position.z = 25 * zoom;
   rightArm.position.x = 9 * zoom;
@@ -366,9 +352,23 @@ function Professor() {
   rightArm.receiveShadow = true;
   chicken.add(rightArm);
 
+  // Gray color
+  const gray = 0x808080;
+
+  //Load the texture in "oldman.jpeg"
+  const textureLoader = new THREE.TextureLoader();
+  const texture = textureLoader.load("oldman.jpeg");
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(1, 1);
+
   const head = new THREE.Mesh(
-    new THREE.BoxBufferGeometry(8 * zoom, 8 * zoom, 8 * zoom),
-    new THREE.MeshLambertMaterial({ color: 0x000000, flatShading: true })
+    new THREE.BoxBufferGeometry(10 * zoom, 10 * zoom, 10 * zoom),
+    new THREE.MeshLambertMaterial({
+      // color: gray,
+      flatShading: true,
+      map: texture,
+    })
   );
   head.position.z = 34 * zoom;
   head.castShadow = true;
@@ -378,8 +378,8 @@ function Professor() {
   return chicken;
 }
 
-function Three() {
-  const three = new THREE.Group();
+function Tree() {
+  const tree = new THREE.Group();
 
   const trunk = new THREE.Mesh(
     new THREE.BoxBufferGeometry(15 * zoom, 15 * zoom, 20 * zoom),
@@ -388,7 +388,7 @@ function Three() {
   trunk.position.z = 10 * zoom;
   trunk.castShadow = true;
   trunk.receiveShadow = true;
-  three.add(trunk);
+  tree.add(trunk);
 
   height = threeHeights[Math.floor(Math.random() * threeHeights.length)];
 
@@ -399,9 +399,9 @@ function Three() {
   crown.position.z = (height / 2 + 20) * zoom;
   crown.castShadow = true;
   crown.receiveShadow = false;
-  three.add(crown);
+  tree.add(crown);
 
-  return three;
+  return tree;
 }
 
 function Chicken() {
@@ -436,9 +436,10 @@ function Chicken() {
   body.receiveShadow = true;
   chicken.add(body);
 
+  const armColor = getRandomSkinToneColor();
   const leftArm = new THREE.Mesh(
     new THREE.BoxBufferGeometry(4 * zoom, 4 * zoom, 11 * zoom),
-    new THREE.MeshPhongMaterial({ color: 0x00356b, flatShading: true })
+    new THREE.MeshPhongMaterial({ color: armColor, flatShading: true })
   );
   leftArm.position.z = 25 * zoom;
   leftArm.position.x = -9 * zoom;
@@ -448,7 +449,7 @@ function Chicken() {
 
   const rightArm = new THREE.Mesh(
     new THREE.BoxBufferGeometry(4 * zoom, 4 * zoom, 11 * zoom),
-    new THREE.MeshPhongMaterial({ color: 0x00356b, flatShading: true })
+    new THREE.MeshPhongMaterial({ color: armColor, flatShading: true })
   );
   rightArm.position.z = 25 * zoom;
   rightArm.position.x = 9 * zoom;
@@ -456,9 +457,22 @@ function Chicken() {
   rightArm.receiveShadow = true;
   chicken.add(rightArm);
 
+  // Random number in the range 8-16
+  const headSize = Math.floor(Math.random() * 8 + 8) * zoom;
+
+  // Load the texture in "yalefreshman.jpeg"
+  const textureLoader = new THREE.TextureLoader();
+  const texture = textureLoader.load("yalefreshman.jpeg");
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(1, 1);
+
   const head = new THREE.Mesh(
-    new THREE.BoxBufferGeometry(8 * zoom, 8 * zoom, 8 * zoom),
-    new THREE.MeshLambertMaterial({ color: 0x000000, flatShading: true })
+    new THREE.BoxBufferGeometry(headSize, headSize, headSize),
+    new THREE.MeshLambertMaterial({
+      flatShading: true,
+      map: texture,
+    })
   );
   head.position.z = 34 * zoom;
   head.castShadow = true;
@@ -539,7 +553,7 @@ function Lane(index) {
 
       this.occupiedPositions = new Set();
       this.threes = [1, 2, 3, 4].map(() => {
-        const three = new Three();
+        const three = new Tree();
         let position;
         do {
           position = Math.floor(Math.random() * columns);
