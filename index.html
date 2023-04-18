@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Get To the Green!</title>
+    <link href="index.css" rel="stylesheet" type="text/css" />
+</head>
+
+<div id="counter">0</div>
+
+<div id="controls">
+    <div>
+        <button id="forward">
+            <svg width="30" height="30" viewBox="0 0 10 10">
+                <g transform="rotate(0, 5,5)">
+                    <path d="M5,4 L7,6 L3,6 L5,4" />
+                </g>
+            </svg>
+        </button>
+        <button id="left">
+            <svg width="30" height="30" viewBox="0 0 10 10">
+                <g transform="rotate(-90, 5,5)">
+                    <path d="M5,4 L7,6 L3,6 L5,4" />
+                </g>
+            </svg>
+        </button>
+        <button id="backward">
+            <svg width="30" height="30" viewBox="0 0 10 10">
+                <g transform="rotate(180, 5,5)">
+                    <path d="M5,4 L7,6 L3,6 L5,4" />
+                </g>
+            </svg>
+        </button>
+        <button id="right">
+            <svg width="30" height="30" viewBox="0 0 10 10">
+                <g transform="rotate(90, 5,5)">
+                    <path d="M5,4 L7,6 L3,6 L5,4" />
+                </g>
+            </svg>
+        </button>
+    </div>
+</div>
+
+<div id="start">
+    <div id="title">
+        <button id="retry">Click Here to Start</button>
+    </div>
+</div>
+
+<div id="end">
+    <button id="retry">Retry</button>
+</div>
+
+
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script type="text/javascript" src="index.js"></script>
+</body>
+
+</html>
