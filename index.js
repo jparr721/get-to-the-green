@@ -1,6 +1,7 @@
 const counterDOM = document.getElementById("counter");
 const endDOM = document.getElementById("end");
 const startDOM = document.getElementById("start");
+let gameStopped = false;
 
 const scene = new THREE.Scene();
 
@@ -88,6 +89,9 @@ scene.add(chicken);
 hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
 scene.add(hemiLight);
 
+// scene.add(new BuildingLeft());
+scene.add(new VanderbiltHall());
+
 const initialDirLightPositionX = -100;
 const initialDirLightPositionY = -100;
 dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
@@ -123,6 +127,7 @@ const initializeValues = () => {
 
   currentLane = 0;
   currentColumn = Math.floor(columns / 2);
+  counterDOM.innerHTML = currentLane;
 
   previousTimestamp = null;
 
@@ -150,6 +155,11 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
+
+function getRandomHexColor() {
+  const HexValue = Math.floor(Math.random() * 0xffffff);
+  return HexValue;
+}
 
 function Texture(width, height, rects) {
   const canvas = document.createElement("canvas");
@@ -235,70 +245,137 @@ function Car() {
   return car;
 }
 
-function Truck() {
-  const truck = new THREE.Group();
-  const color =
-    vechicleColors[Math.floor(Math.random() * vechicleColors.length)];
+function BuildingLeft() {
+  const buildingLeft = new THREE.Group();
+  const color = getRandomHexColor();
+  const textureLoader = new THREE.TextureLoader();
+  const texture = textureLoader.load("bg.png");
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(1, 1);
 
-  const base = new THREE.Mesh(
-    new THREE.BoxBufferGeometry(100 * zoom, 25 * zoom, 5 * zoom),
-    new THREE.MeshLambertMaterial({ color: 0xb4c6fc, flatShading: true })
+  // Create a box for the building
+  const height = 100;
+  const width = 1000;
+  const depth = 100;
+  const building = new THREE.Mesh(
+    new THREE.BoxBufferGeometry(height * zoom, width * zoom, depth * zoom),
+    new THREE.MeshPhongMaterial({ color, flatShading: true, map: texture })
   );
-  base.position.z = 10 * zoom;
-  truck.add(base);
+  building.position.z = height * zoom;
+  building.position.x = -400 * zoom;
+  building.castShadow = true;
+  building.receiveShadow = true;
+  buildingLeft.add(building);
+  return buildingLeft;
+}
 
-  const cargo = new THREE.Mesh(
-    new THREE.BoxBufferGeometry(75 * zoom, 35 * zoom, 40 * zoom),
-    new THREE.MeshPhongMaterial({ color: 0xb4c6fc, flatShading: true })
+function VanderbiltHall() {
+  const vanderbiltHall = new THREE.Group();
+
+  // Hex color for a light brown
+  const lightBrown = 0x8b4513;
+
+  // Hex color for a light blue
+  const lightBlue = 0x87ceeb;
+
+  // Create the main group for the building
+  var building = new THREE.Group();
+
+  // Define the size and shape of the building
+  var width = 200 * zoom;
+  var height = 200 * zoom;
+  var depth = 100 * zoom;
+
+  // Create the base of the building
+  var baseGeometry = new THREE.BoxGeometry(width, depth, width);
+  var baseMaterial = new THREE.MeshPhongMaterial({ color: lightBrown });
+  var base = new THREE.Mesh(baseGeometry, baseMaterial);
+  base.position.y = depth / 2;
+  building.add(base);
+
+  // Create the main part of the building
+  var mainGeometry = new THREE.BoxGeometry(width, height, depth);
+  var mainMaterial = new THREE.MeshPhongMaterial({ color: lightBlue });
+  var main = new THREE.Mesh(mainGeometry, mainMaterial);
+  main.position.y = depth + height / 2;
+  main.position.z = height / 2;
+  building.add(main);
+
+  // Create a roof for the building
+  var roofGeometry = new THREE.BoxGeometry(width, depth, width);
+  var roofMaterial = new THREE.MeshPhongMaterial({ color: lightBrown });
+  var roof = new THREE.Mesh(roofGeometry, roofMaterial);
+  roof.position.y = depth + height * 1.25;
+  building.add(roof);
+
+  building.position.x = Math.random() > 0.5 ? -boardWidth : boardWidth;
+
+  return building;
+}
+
+function Professor() {
+  const chicken = new THREE.Group();
+
+  const rightLeg = new THREE.Mesh(
+    new THREE.BoxBufferGeometry(5 * zoom, 5 * zoom, 12 * zoom),
+    new THREE.MeshPhongMaterial({ color: 0x0e5097, flatShading: true })
   );
-  cargo.position.x = 15 * zoom;
-  cargo.position.z = 30 * zoom;
-  cargo.castShadow = true;
-  cargo.receiveShadow = true;
-  truck.add(cargo);
+  rightLeg.position.z = 7 * zoom;
+  rightLeg.position.x = 4 * zoom;
+  rightLeg.castShadow = true;
+  rightLeg.receiveShadow = true;
+  chicken.add(rightLeg);
 
-  const cabin = new THREE.Mesh(
-    new THREE.BoxBufferGeometry(25 * zoom, 30 * zoom, 30 * zoom),
-    [
-      new THREE.MeshPhongMaterial({ color, flatShading: true }), // back
-      new THREE.MeshPhongMaterial({
-        color,
-        flatShading: true,
-        map: truckFrontTexture,
-      }),
-      new THREE.MeshPhongMaterial({
-        color,
-        flatShading: true,
-        map: truckRightSideTexture,
-      }),
-      new THREE.MeshPhongMaterial({
-        color,
-        flatShading: true,
-        map: truckLeftSideTexture,
-      }),
-      new THREE.MeshPhongMaterial({ color, flatShading: true }), // top
-      new THREE.MeshPhongMaterial({ color, flatShading: true }), // bottom
-    ]
+  const leftLeg = new THREE.Mesh(
+    new THREE.BoxBufferGeometry(5 * zoom, 5 * zoom, 12 * zoom),
+    new THREE.MeshPhongMaterial({ color: 0x0e5097, flatShading: true })
   );
-  cabin.position.x = -40 * zoom;
-  cabin.position.z = 20 * zoom;
-  cabin.castShadow = true;
-  cabin.receiveShadow = true;
-  truck.add(cabin);
+  leftLeg.position.z = 7 * zoom;
+  leftLeg.position.x = -4 * zoom;
+  leftLeg.castShadow = true;
+  leftLeg.receiveShadow = true;
+  chicken.add(leftLeg);
 
-  const frontWheel = new Wheel();
-  frontWheel.position.x = -38 * zoom;
-  truck.add(frontWheel);
+  const body = new THREE.Mesh(
+    new THREE.BoxBufferGeometry(15 * zoom, 9 * zoom, 18 * zoom),
+    new THREE.MeshPhongMaterial({ color: 0x00356b, flatShading: true })
+  );
+  body.position.z = 22 * zoom;
+  body.castShadow = true;
+  body.receiveShadow = true;
+  chicken.add(body);
 
-  const middleWheel = new Wheel();
-  middleWheel.position.x = -10 * zoom;
-  truck.add(middleWheel);
+  const leftArm = new THREE.Mesh(
+    new THREE.BoxBufferGeometry(4 * zoom, 4 * zoom, 11 * zoom),
+    new THREE.MeshPhongMaterial({ color: 0x00356b, flatShading: true })
+  );
+  leftArm.position.z = 25 * zoom;
+  leftArm.position.x = -9 * zoom;
+  leftArm.castShadow = true;
+  leftArm.receiveShadow = true;
+  chicken.add(leftArm);
 
-  const backWheel = new Wheel();
-  backWheel.position.x = 30 * zoom;
-  truck.add(backWheel);
+  const rightArm = new THREE.Mesh(
+    new THREE.BoxBufferGeometry(4 * zoom, 4 * zoom, 11 * zoom),
+    new THREE.MeshPhongMaterial({ color: 0x00356b, flatShading: true })
+  );
+  rightArm.position.z = 25 * zoom;
+  rightArm.position.x = 9 * zoom;
+  rightArm.castShadow = true;
+  rightArm.receiveShadow = true;
+  chicken.add(rightArm);
 
-  return truck;
+  const head = new THREE.Mesh(
+    new THREE.BoxBufferGeometry(8 * zoom, 8 * zoom, 8 * zoom),
+    new THREE.MeshLambertMaterial({ color: 0x000000, flatShading: true })
+  );
+  head.position.z = 34 * zoom;
+  head.castShadow = true;
+  head.receiveShadow = false;
+  chicken.add(head);
+
+  return chicken;
 }
 
 function Three() {
@@ -482,7 +559,7 @@ function Lane(index) {
 
       const occupiedPositions = new Set();
       this.vechicles = [1, 2, 3].map(() => {
-        const vechicle = new Car();
+        const vechicle = new Chicken();
         let position;
         do {
           position = Math.floor((Math.random() * columns) / 2);
@@ -505,7 +582,7 @@ function Lane(index) {
 
       const occupiedPositions = new Set();
       this.vechicles = [1, 2].map(() => {
-        const vechicle = new Truck();
+        const vechicle = new Professor();
         let position;
         do {
           position = Math.floor((Math.random() * columns) / 3);
@@ -536,18 +613,6 @@ document.querySelector("#end").addEventListener("click", () => {
   initializeValues();
   endDOM.style.visibility = "hidden";
 });
-
-document
-  .getElementById("forward")
-  .addEventListener("click", () => move("forward"));
-
-document
-  .getElementById("backward")
-  .addEventListener("click", () => move("backward"));
-
-document.getElementById("left").addEventListener("click", () => move("left"));
-
-document.getElementById("right").addEventListener("click", () => move("right"));
 
 window.addEventListener("keydown", (event) => {
   if (event.keyCode == "38") {
@@ -744,7 +809,7 @@ function animate(timestamp) {
   ) {
     const chickenMinX = chicken.position.x - (chickenSize * zoom) / 2;
     const chickenMaxX = chicken.position.x + (chickenSize * zoom) / 2;
-    const vechicleLength = { car: 60, truck: 105 }[lanes[currentLane].type];
+    const vechicleLength = { car: 20, truck: 20 }[lanes[currentLane].type];
     lanes[currentLane].vechicles.forEach((vechicle) => {
       const carMinX = vechicle.position.x - (vechicleLength * zoom) / 2;
       const carMaxX = vechicle.position.x + (vechicleLength * zoom) / 2;
