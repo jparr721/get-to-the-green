@@ -494,15 +494,21 @@ function Road() {
       new THREE.MeshPhongMaterial({ color })
     );
 
-  const middle = createSection(0x454a59);
+  // Color in hex of tan dirt
+  const dirtColor = 0x6d4f4f;
+
+  // Color in hex slightly darker than dirtColor
+  const darkDirtColor = 0x3d1f1f;
+
+  const middle = createSection(dirtColor);
   middle.receiveShadow = true;
   road.add(middle);
 
-  const left = createSection(0x393d49);
+  const left = createSection(darkDirtColor);
   left.position.x = -boardWidth * zoom;
   road.add(left);
 
-  const right = createSection(0x393d49);
+  const right = createSection(darkDirtColor);
   right.position.x = boardWidth * zoom;
   road.add(right);
 
