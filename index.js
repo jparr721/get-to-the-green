@@ -875,44 +875,44 @@ function move(direction) {
   );
 
   if (direction === "forward") {
-    if (
-      lanes[finalPositions.lane + 1].type === "forest" &&
-      lanes[finalPositions.lane + 1].occupiedPositions.has(
-        finalPositions.column
-      )
-    )
-      return;
+    // if (
+    //   lanes[finalPositions.lane + 1].type === "forest" &&
+    //   lanes[finalPositions.lane + 1].occupiedPositions.has(
+    //     finalPositions.column
+    //   )
+    // )
+    //   return;
     if (!stepStartTimestamp) startMoving = true;
     addLane();
   } else if (direction === "backward") {
-    if (finalPositions.lane === 0) return;
-    if (
-      lanes[finalPositions.lane - 1].type === "forest" &&
-      lanes[finalPositions.lane - 1].occupiedPositions.has(
-        finalPositions.column
-      )
-    )
-      return;
+    // if (finalPositions.lane === 0) return;
+    // if (
+    //   lanes[finalPositions.lane - 1].type === "forest" &&
+    //   lanes[finalPositions.lane - 1].occupiedPositions.has(
+    //     finalPositions.column
+    //   )
+    // )
+    //   return;
     if (!stepStartTimestamp) startMoving = true;
   } else if (direction === "left") {
-    if (finalPositions.column === 0) return;
-    if (
-      lanes[finalPositions.lane].type === "forest" &&
-      lanes[finalPositions.lane].occupiedPositions.has(
-        finalPositions.column - 1
-      )
-    )
-      return;
+    // if (finalPositions.column === 0) return;
+    // if (
+    //   lanes[finalPositions.lane].type === "forest" &&
+    //   lanes[finalPositions.lane].occupiedPositions.has(
+    //     finalPositions.column - 1
+    //   )
+    // )
+    //   return;
     if (!stepStartTimestamp) startMoving = true;
   } else if (direction === "right") {
-    if (finalPositions.column === columns - 1) return;
-    if (
-      lanes[finalPositions.lane].type === "forest" &&
-      lanes[finalPositions.lane].occupiedPositions.has(
-        finalPositions.column + 1
-      )
-    )
-      return;
+    // if (finalPositions.column === columns - 1) return;
+    // if (
+    //   lanes[finalPositions.lane].type === "forest" &&
+    //   lanes[finalPositions.lane].occupiedPositions.has(
+    //     finalPositions.column + 1
+    //   )
+    // )
+    //   return;
     if (!stepStartTimestamp) startMoving = true;
   }
   moves.push(direction);
@@ -1043,7 +1043,7 @@ function animate(timestamp) {
   ) {
     const chickenMinX = chicken.position.x - (chickenSize * zoom) / 2;
     const chickenMaxX = chicken.position.x + (chickenSize * zoom) / 2;
-    const vechicleLength = { car: 20, truck: 20, newhavenline: 50 }[
+    const vechicleLength = { car: 20, truck: 20, newhavenline: 20 }[
       lanes[currentLane].type
     ];
     lanes[currentLane].vechicles.forEach((vechicle) => {
