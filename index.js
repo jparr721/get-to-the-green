@@ -92,6 +92,8 @@ scene.add(hemiLight);
 // scene.add(new BuildingLeft());
 scene.add(new VanderbiltHall());
 
+scene.add(new SchwarzmannCenter());
+
 const initialDirLightPositionX = -100;
 const initialDirLightPositionY = -100;
 dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
@@ -289,6 +291,73 @@ function VanderbiltHall() {
   });
   var roof = new THREE.Mesh(roofGeometry, roofMaterial);
   roof.position.y = depth + height * 1.25;
+  building.add(roof);
+
+  building.position.x = Math.random() > 0.5 ? -boardWidth : boardWidth;
+
+  return building;
+}
+
+function SchwarzmannCenter() {
+  const vanderbiltHall = new THREE.Group();
+
+  const textureLoader = new THREE.TextureLoader();
+  const texture = textureLoader.load("marble_mat.jpg");
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(1, 1);
+
+  const roofTexture = textureLoader.load("oldcopper_mat.jpg");
+  roofTexture.wrapS = THREE.RepeatWrapping;
+  roofTexture.wrapT = THREE.RepeatWrapping;
+  roofTexture.repeat.set(1, 1);
+
+  // Hex color for a marble colour
+  const lightStone = 0xece2ca;
+
+  // Hex color for a light blue
+  const lightBlue = 0x87ceeb;
+
+  // Create the main group for the building
+  var building = new THREE.Group();
+
+  // Define the size and shape of the building
+  var width = 150 * zoom;
+  var height = 150 * zoom;
+  var depth = 90 * zoom;
+
+  // Create the main part of the building
+  var mainGeometry = new THREE.BoxGeometry(width, height, depth);
+  var mainMaterial = new THREE.MeshPhongMaterial({
+    color: 0xffffff,
+    map: texture,
+  });
+  var main = new THREE.Mesh(mainGeometry, mainMaterial);
+  main.position.y = depth + height / 2;
+  main.position.z = height / 2;
+  building.add(main);
+
+  // Create the main part of the building
+  var baseGeometry = new THREE.BoxGeometry(width * 1.2, height * 1.2, 20);
+  var baseMaterial = new THREE.MeshPhongMaterial({
+    color: 0xffffff,
+    map: texture,
+  });
+  var base = new THREE.Mesh(baseGeometry, baseMaterial);
+  base.position.y = depth + height * 0.2 + height / 2;
+  base.position.z = 0;
+  building.add(base);
+
+  // Create a roof for the building
+  var roofGeometry = new THREE.SphereGeometry(90, 10, 10);
+  var roofMaterial = new THREE.MeshPhongMaterial({
+    color: 0xffffff,
+    map: roofTexture,
+  });
+  var roof = new THREE.Mesh(roofGeometry, roofMaterial);
+  roof.position.y = main.position.y;
+  roof.position.x = main.position.x;
+  roof.position.z = main.position.z + 100;
   building.add(roof);
 
   building.position.x = Math.random() > 0.5 ? -boardWidth : boardWidth;
