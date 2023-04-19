@@ -117,7 +117,7 @@ backLight.position.set(200, 200, 50);
 backLight.castShadow = true;
 scene.add(backLight);
 
-const laneTypes = ["car", "truck", "forest"];
+const laneTypes = ["car", "truck", "forest", "newhavenline"];
 const laneSpeeds = [2, 2.5, 3];
 const vechicleColors = [0xa52523, 0xbdb638, 0x78b14b];
 const threeHeights = [20, 45, 60];
@@ -294,6 +294,74 @@ function VanderbiltHall() {
   building.position.x = Math.random() > 0.5 ? -boardWidth : boardWidth;
 
   return building;
+}
+
+function Train() {
+  var trainCar = new THREE.Group();
+
+  // Create the main body of the train car
+
+  // Gray color
+  const gray = 0x808080;
+
+  // Add texture from "amtrack-logo.jpeg"
+  const textureLoader = new THREE.TextureLoader();
+  const texture = textureLoader.load("amtrack-logo.jpeg");
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(2, 2);
+
+  var bodyGeometry = new THREE.BoxGeometry(75 * zoom, 35 * zoom, 75 * zoom);
+  var bodyMaterial = new THREE.MeshBasicMaterial({ color: gray, map: texture });
+  var bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
+  trainCar.add(bodyMesh);
+
+  // Create the engine of the train car
+
+  // Dark gray color
+  const darkGray = 0x404040;
+
+  var engineGeometry = new THREE.BoxGeometry(20 * zoom, 20 * zoom, 20 * zoom);
+  var engineMaterial = new THREE.MeshBasicMaterial({ color: darkGray });
+  var engineMesh = new THREE.Mesh(engineGeometry, engineMaterial);
+  engineMesh.position.set(-25 * zoom, 8 * zoom, 45 * zoom);
+  trainCar.add(engineMesh);
+
+  // Next stack in the train car
+  var engineGeometry = new THREE.BoxGeometry(20 * zoom, 20 * zoom, 20 * zoom);
+  var engineMaterial = new THREE.MeshBasicMaterial({ color: darkGray });
+  var engineMesh = new THREE.Mesh(engineGeometry, engineMaterial);
+  engineMesh.position.set(-25 * zoom, 8 * zoom, 65 * zoom);
+  trainCar.add(engineMesh);
+
+  // Light blue color for windows
+  const lightBlue = 0x87ceeb;
+
+  var windowGeometry = new THREE.BoxGeometry(10 * zoom, 10 * zoom, 10 * zoom);
+  var windowMaterial = new THREE.MeshBasicMaterial({ color: lightBlue });
+  var windowMesh = new THREE.Mesh(windowGeometry, windowMaterial);
+  windowMesh.position.set(10 * zoom, 15 * zoom, 20 * zoom);
+  trainCar.add(windowMesh);
+
+  var windowGeometry = new THREE.BoxGeometry(10 * zoom, 10 * zoom, 10 * zoom);
+  var windowMaterial = new THREE.MeshBasicMaterial({ color: lightBlue });
+  var windowMesh = new THREE.Mesh(windowGeometry, windowMaterial);
+  windowMesh.position.set(-10 * zoom, 15 * zoom, 20 * zoom);
+  trainCar.add(windowMesh);
+
+  // Create the wheels of the train car
+  // var wheelGeometry = new THREE.CylinderGeometry(0.25, 0.25, 0.5, 16);
+  // var wheelMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+  // var frontWheelMesh = new THREE.Mesh(wheelGeometry, wheelMaterial);
+  // frontWheelMesh.position.set(0.5, -0.5, 0.5);
+  const wheel = new Wheel();
+  // wheel.position.x = -18 * zoom;
+  trainCar.add(wheel);
+
+  // var rearWheelMesh = new THREE.Mesh(wheelGeometry, wheelMaterial);
+  // rearWheelMesh.position.set(0.5, -0.5, -0.5);
+  // trainCar.add(rearWheelMesh);
+  return trainCar;
 }
 
 function Professor() {
@@ -544,6 +612,51 @@ function Grass() {
   return grass;
 }
 
+function NewHavenGreen() {
+  const newhavenGreen = new THREE.Group();
+  const createSection = (color) =>
+    new THREE.Mesh(
+      new THREE.BoxBufferGeometry(
+        boardWidth * zoom,
+        positionWidth * zoom,
+        3 * zoom
+      ),
+      new THREE.MeshPhongMaterial({ color })
+    );
+
+  const middle = createSection(0x1f1f1f);
+  middle.receiveShadow = true;
+  newhavenGreen.add(middle);
+
+  newhavenGreen.z = 1.5 * zoom;
+
+  return newhavenGreen;
+}
+
+function NewHavenLine() {
+  const newHavenLine = new THREE.Group();
+
+  const createSection = (color) =>
+    new THREE.Mesh(
+      new THREE.PlaneBufferGeometry(boardWidth * zoom, positionWidth * zoom),
+      new THREE.MeshPhongMaterial({ color })
+    );
+
+  const middle = createSection(0x454a59);
+  middle.receiveShadow = true;
+  newHavenLine.add(middle);
+
+  const left = createSection(0x393d49);
+  left.position.x = -boardWidth * zoom;
+  newHavenLine.add(left);
+
+  const right = createSection(0x393d49);
+  right.position.x = boardWidth * zoom;
+  newHavenLine.add(right);
+
+  return newHavenLine;
+}
+
 function Lane(index) {
   this.index = index;
   this.type =
@@ -557,22 +670,45 @@ function Lane(index) {
       this.mesh = new Grass();
       break;
     }
+    case "newhavenline": {
+      this.mesh = new NewHavenLine();
+      this.direction = Math.random() >= 0.5;
+
+      const occupiedPositions = new Set();
+      this.vechicles = [1, 2].map(() => {
+        const vechicle = new Train();
+        let position;
+        do {
+          position = Math.floor((Math.random() * columns) / 3);
+        } while (occupiedPositions.has(position));
+        occupiedPositions.add(position);
+        vechicle.position.x =
+          (position * positionWidth * 3 + positionWidth / 2) * zoom -
+          (boardWidth * zoom) / 2;
+        if (!this.direction) vechicle.rotation.z = Math.PI;
+        this.mesh.add(vechicle);
+        return vechicle;
+      });
+
+      this.speed = laneSpeeds[Math.floor(Math.random() * laneSpeeds.length)];
+      break;
+    }
     case "forest": {
       this.mesh = new Grass();
 
       this.occupiedPositions = new Set();
-      this.threes = [1, 2, 3, 4].map(() => {
-        const three = new Tree();
+      this.trees = [1, 2, 3, 4].map(() => {
+        const tree = new Tree();
         let position;
         do {
           position = Math.floor(Math.random() * columns);
         } while (this.occupiedPositions.has(position));
         this.occupiedPositions.add(position);
-        three.position.x =
-          (position * positionWidth + positionWidth / 2) * zoom -
+        tree.position.x =
+          (position * positionWidth * 3 + positionWidth / 2) * zoom -
           (boardWidth * zoom) / 2;
-        this.mesh.add(three);
-        return three;
+        this.mesh.add(tree);
+        return tree;
       });
       break;
     }
@@ -638,16 +774,17 @@ document.querySelector("#end").addEventListener("click", () => {
 });
 
 window.addEventListener("keydown", (event) => {
-  if (event.keyCode == "38") {
+  if (event.code == "ArrowUp") {
+    console.log("Moving Up");
     // up arrow
     move("forward");
-  } else if (event.keyCode == "40") {
+  } else if (event.code == "ArrowDown") {
     // down arrow
     move("backward");
-  } else if (event.keyCode == "37") {
+  } else if (event.code == "ArrowLeft") {
     // left arrow
     move("left");
-  } else if (event.keyCode == "39") {
+  } else if (event.code == "ArrowRight") {
     // right arrow
     move("right");
   }
@@ -721,7 +858,11 @@ function animate(timestamp) {
 
   // Animate cars and trucks moving on the lane
   lanes.forEach((lane) => {
-    if (lane.type === "car" || lane.type === "truck") {
+    if (
+      lane.type === "car" ||
+      lane.type === "truck" ||
+      lane.type === "newhavenline"
+    ) {
       const aBitBeforeTheBeginingOfLane =
         (-boardWidth * zoom) / 2 - positionWidth * 2 * zoom;
       const aBitAfterTheEndOFLane =
@@ -828,11 +969,14 @@ function animate(timestamp) {
   // Hit test
   if (
     lanes[currentLane].type === "car" ||
-    lanes[currentLane].type === "truck"
+    lanes[currentLane].type === "truck" ||
+    lanes[currentLane].type === "newhavenline"
   ) {
     const chickenMinX = chicken.position.x - (chickenSize * zoom) / 2;
     const chickenMaxX = chicken.position.x + (chickenSize * zoom) / 2;
-    const vechicleLength = { car: 20, truck: 20 }[lanes[currentLane].type];
+    const vechicleLength = { car: 20, truck: 20, newhavenline: 50 }[
+      lanes[currentLane].type
+    ];
     lanes[currentLane].vechicles.forEach((vechicle) => {
       const carMinX = vechicle.position.x - (vechicleLength * zoom) / 2;
       const carMaxX = vechicle.position.x + (vechicleLength * zoom) / 2;

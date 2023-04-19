@@ -31,6 +31,31 @@ button {
     visibility: hidden;
 }
 
+#endcredit {
+    background-image: url("endgame.png");
+    background-size: cover;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+}
+
+#endcredit button {
+    background-color: transparent;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+}
+
+#end button {
+    font-family: inherit;
+    font-size: inherit;
+}
+
 #start {
     position: absolute;
     min-width: 100%;
@@ -44,41 +69,6 @@ button {
 #start button {
     font-family: inherit;
     font-size: inherit;
-}
-
-#end button {
-    background-color: red;
-    padding: 20px 50px 20px 50px;
-    font-family: inherit;
-    font-size: inherit;
-}
-
-#controls {
-    position: absolute;
-    min-width: 100%;
-    min-height: 100%;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-}
-
-#controls div {
-    display: grid;
-    grid-template-columns: 50px 50px 50px;
-    grid-template-rows: auto auto;
-    grid-column-gap: 10px;
-    grid-row-gap: 10px;
-    margin-bottom: 20px;
-}
-
-#controls button {
-    width: 100%;
-    background-color: white;
-    border: 1px solid lightgray;
-}
-
-#controls button:first-of-type {
-    grid-column: 1/-1;
 }
 
 #title {
