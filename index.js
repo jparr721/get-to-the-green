@@ -1,7 +1,9 @@
 const counterDOM = document.getElementById("counter");
 const endDOM = document.getElementById("end");
 const startDOM = document.getElementById("start");
+const winDOM = document.getElementById("win");
 let gameStopped = false;
+let godMode = false;
 
 const scene = new THREE.Scene();
 
@@ -40,11 +42,14 @@ const stepTime = 200; // Miliseconds it takes for the chicken to take a step for
 let lanes;
 let currentLane;
 let currentColumn;
+let coinCount = 0;
 
 let previousTimestamp;
 let startMoving;
 let moves;
 let stepStartTimestamp;
+
+let gBuildingPositions = [20, 40, 60, 80, 100];
 
 const carFrontTexture = new Texture(40, 80, [{ x: 0, y: 10, w: 30, h: 60 }]);
 const carBackTexture = new Texture(40, 80, [{ x: 10, y: 10, w: 30, h: 60 }]);
@@ -83,16 +88,28 @@ const addLane = () => {
   lanes.push(lane);
 };
 
+const allBuildings = [VanderbiltHall, SchwarzmannCenter, GlobalAffairs, SOM];
+
+function YaleBuilding() {
+  if (allBuildings.length === 0) {
+    return new SOM();
+  }
+
+  const index = Math.floor(Math.random() * allBuildings.length);
+  const building = allBuildings[index];
+  console.log("ADDING BUILDING: ", building.name);
+
+  // Remove the building from the list
+  allBuildings.splice(index, 1);
+
+  scene.add(new building());
+}
+
 const chicken = new Chicken();
 scene.add(chicken);
 
 hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
 scene.add(hemiLight);
-
-// scene.add(new BuildingLeft());
-scene.add(new VanderbiltHall());
-
-scene.add(new SchwarzmannCenter());
 
 const initialDirLightPositionX = -100;
 const initialDirLightPositionY = -100;
@@ -110,17 +127,13 @@ dirLight.shadow.camera.right = d;
 dirLight.shadow.camera.top = d;
 dirLight.shadow.camera.bottom = -d;
 
-// var helper = new THREE.CameraHelper( dirLight.shadow.camera );
-// var helper = new THREE.CameraHelper( camera );
-// scene.add(helper)
-
 backLight = new THREE.DirectionalLight(0x000000, 0.4);
 backLight.position.set(200, 200, 50);
 backLight.castShadow = true;
 scene.add(backLight);
 
 const laneTypes = ["car", "truck", "forest", "newhavenline"];
-const laneSpeeds = [2, 2.5, 3];
+const laneSpeeds = [2, 2.5, 3, 4];
 const vechicleColors = [0xa52523, 0xbdb638, 0x78b14b];
 const threeHeights = [20, 45, 60];
 
@@ -209,29 +222,23 @@ function Wheel() {
   return wheel;
 }
 
-function BuildingLeft() {
-  const buildingLeft = new THREE.Group();
-  const color = getRandomHexColor();
-  const textureLoader = new THREE.TextureLoader();
-  const texture = textureLoader.load("bg.png");
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(1, 1);
-
-  // Create a box for the building
-  const height = 100;
-  const width = 1000;
-  const depth = 100;
-  const building = new THREE.Mesh(
-    new THREE.BoxBufferGeometry(height * zoom, width * zoom, depth * zoom),
-    new THREE.MeshPhongMaterial({ color, flatShading: true, map: texture })
+function Coin() {
+  var geometry = new THREE.CylinderBufferGeometry(
+    10 * zoom,
+    10 * zoom,
+    6 * zoom,
+    10
   );
-  building.position.z = height * zoom;
-  building.position.x = -400 * zoom;
-  building.castShadow = true;
-  building.receiveShadow = true;
-  buildingLeft.add(building);
-  return buildingLeft;
+  var material = new THREE.MeshPhongMaterial({
+    color: 0xffdf2d,
+    flatShading: true,
+  });
+  var coin = new THREE.Mesh(geometry, material);
+  coin.castShadow = true;
+  coin.receiveShadow = true;
+  coin.rotation.setFromVector3(new THREE.Vector3(Math.PI / 2, 0, 0));
+  coin.position.z = 1 * zoom;
+  return coin;
 }
 
 function VanderbiltHall() {
@@ -294,7 +301,70 @@ function VanderbiltHall() {
   building.add(roof);
 
   building.position.x = Math.random() > 0.5 ? -boardWidth : boardWidth;
+  building.position.y = chicken.position.y;
 
+  return building;
+}
+
+function GlobalAffairs() {
+  const textureLoader = new THREE.TextureLoader();
+  const texture = textureLoader.load("globalaffairs.png");
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(1, 1);
+
+  // Create the main group for the building
+  var building = new THREE.Group();
+
+  // Define the size and shape of the building
+  var width = 150 * zoom;
+  var height = 150 * zoom;
+  var depth = 90 * zoom;
+
+  // Create the main part of the building
+  var mainGeometry = new THREE.BoxGeometry(width, height, depth);
+  var mainMaterial = new THREE.MeshPhongMaterial({
+    color: 0xffffff,
+    map: texture,
+  });
+  var main = new THREE.Mesh(mainGeometry, mainMaterial);
+  main.position.y = depth + height / 2;
+  main.position.z = height / 2;
+  building.add(main);
+
+  building.position.x = Math.random() > 0.5 ? -boardWidth : boardWidth;
+  building.position.y = chicken.position.y;
+  return building;
+}
+
+function SOM() {
+  const textureLoader = new THREE.TextureLoader();
+  const texture = textureLoader.load("SOM.png");
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(1, 1);
+
+  // Create the main group for the building
+  var building = new THREE.Group();
+
+  // Define the size and shape of the building
+  var width = 150 * zoom;
+  var height = 150 * zoom;
+  var depth = 90 * zoom;
+
+  // Create the main part of the building
+  var mainGeometry = new THREE.BoxGeometry(width, height, depth);
+  var mainMaterial = new THREE.MeshPhongMaterial({
+    color: 0xffffff,
+    map: texture,
+  });
+  var main = new THREE.Mesh(mainGeometry, mainMaterial);
+  main.position.y = depth + height / 2;
+  main.position.z = height / 2;
+  building.add(main);
+
+  building.position.x = Math.random() > 0.5 ? -boardWidth : boardWidth;
+  building.position.y = chicken.position.y;
   return building;
 }
 
@@ -311,12 +381,6 @@ function SchwarzmannCenter() {
   roofTexture.wrapS = THREE.RepeatWrapping;
   roofTexture.wrapT = THREE.RepeatWrapping;
   roofTexture.repeat.set(1, 1);
-
-  // Hex color for a marble colour
-  const lightStone = 0xece2ca;
-
-  // Hex color for a light blue
-  const lightBlue = 0x87ceeb;
 
   // Create the main group for the building
   var building = new THREE.Group();
@@ -361,6 +425,7 @@ function SchwarzmannCenter() {
   building.add(roof);
 
   building.position.x = Math.random() > 0.5 ? -boardWidth : boardWidth;
+  building.position.y = chicken.position.y;
 
   return building;
 }
@@ -726,6 +791,8 @@ function NewHavenLine() {
   return newHavenLine;
 }
 
+let buildingsAddedFor = [];
+
 function Lane(index) {
   this.index = index;
   this.type =
@@ -733,7 +800,24 @@ function Lane(index) {
       ? "field"
       : laneTypes[Math.floor(Math.random() * laneTypes.length)];
 
+  // Every time the score is within our interval, draw a building.
+  if (
+    gBuildingPositions.includes(currentLane) &&
+    !buildingsAddedFor.includes(currentLane)
+  ) {
+    this.type = "yalebuilding";
+  }
+
   switch (this.type) {
+    case "yalebuilding": {
+      this.type = "field";
+      this.mesh = new Grass();
+      buildingsAddedFor.push(currentLane);
+      YaleBuilding();
+      // this.mesh.add(new YaleBuilding());
+      break;
+    }
+
     case "field": {
       this.type = "field";
       this.mesh = new Grass();
@@ -757,6 +841,21 @@ function Lane(index) {
         if (!this.direction) vechicle.rotation.z = Math.PI;
         this.mesh.add(vechicle);
         return vechicle;
+      });
+
+      this.coins = [1, 2].map(() => {
+        const coin = new Coin();
+        let position;
+        do {
+          position = Math.floor((Math.random() * columns) / 2);
+        } while (occupiedPositions.has(position));
+        occupiedPositions.add(position);
+        coin.position.x =
+          (position * positionWidth * 2 + positionWidth / 2) * zoom -
+          (boardWidth * zoom) / 2;
+        if (!this.direction) coin.rotation.z = Math.PI;
+        this.mesh.add(coin);
+        return coin;
       });
 
       this.speed = laneSpeeds[Math.floor(Math.random() * laneSpeeds.length)];
@@ -800,6 +899,20 @@ function Lane(index) {
         this.mesh.add(vechicle);
         return vechicle;
       });
+      this.coins = [1, 2].map(() => {
+        const coin = new Coin();
+        let position;
+        do {
+          position = Math.floor((Math.random() * columns) / 2);
+        } while (occupiedPositions.has(position));
+        occupiedPositions.add(position);
+        coin.position.x =
+          (position * positionWidth * 2 + positionWidth / 2) * zoom -
+          (boardWidth * zoom) / 2;
+        if (!this.direction) coin.rotation.z = Math.PI;
+        this.mesh.add(coin);
+        return coin;
+      });
 
       this.speed = laneSpeeds[Math.floor(Math.random() * laneSpeeds.length)];
       break;
@@ -823,6 +936,20 @@ function Lane(index) {
         this.mesh.add(vechicle);
         return vechicle;
       });
+      this.coins = [1, 2].map(() => {
+        const coin = new Coin();
+        let position;
+        do {
+          position = Math.floor((Math.random() * columns) / 2);
+        } while (occupiedPositions.has(position));
+        occupiedPositions.add(position);
+        coin.position.x =
+          (position * positionWidth * 2 + positionWidth / 2) * zoom -
+          (boardWidth * zoom) / 2;
+        if (!this.direction) coin.rotation.z = Math.PI;
+        this.mesh.add(coin);
+        return coin;
+      });
 
       this.speed = laneSpeeds[Math.floor(Math.random() * laneSpeeds.length)];
       break;
@@ -844,7 +971,6 @@ document.querySelector("#end").addEventListener("click", () => {
 
 window.addEventListener("keydown", (event) => {
   if (event.code == "ArrowUp") {
-    console.log("Moving Up");
     // up arrow
     move("forward");
   } else if (event.code == "ArrowDown") {
@@ -875,44 +1001,13 @@ function move(direction) {
   );
 
   if (direction === "forward") {
-    // if (
-    //   lanes[finalPositions.lane + 1].type === "forest" &&
-    //   lanes[finalPositions.lane + 1].occupiedPositions.has(
-    //     finalPositions.column
-    //   )
-    // )
-    //   return;
     if (!stepStartTimestamp) startMoving = true;
     addLane();
   } else if (direction === "backward") {
-    // if (finalPositions.lane === 0) return;
-    // if (
-    //   lanes[finalPositions.lane - 1].type === "forest" &&
-    //   lanes[finalPositions.lane - 1].occupiedPositions.has(
-    //     finalPositions.column
-    //   )
-    // )
-    //   return;
     if (!stepStartTimestamp) startMoving = true;
   } else if (direction === "left") {
-    // if (finalPositions.column === 0) return;
-    // if (
-    //   lanes[finalPositions.lane].type === "forest" &&
-    //   lanes[finalPositions.lane].occupiedPositions.has(
-    //     finalPositions.column - 1
-    //   )
-    // )
-    //   return;
     if (!stepStartTimestamp) startMoving = true;
   } else if (direction === "right") {
-    // if (finalPositions.column === columns - 1) return;
-    // if (
-    //   lanes[finalPositions.lane].type === "forest" &&
-    //   lanes[finalPositions.lane].occupiedPositions.has(
-    //     finalPositions.column + 1
-    //   )
-    // )
-    //   return;
     if (!stepStartTimestamp) startMoving = true;
   }
   moves.push(direction);
@@ -920,6 +1015,11 @@ function move(direction) {
 
 function animate(timestamp) {
   requestAnimationFrame(animate);
+
+  if (currentLane >= 101 || currentLane + coinCount >= 201) {
+    endDOM.style.visibility = "visible";
+    return;
+  }
 
   if (!previousTimestamp) previousTimestamp = timestamp;
   const delta = timestamp - previousTimestamp;
@@ -1012,12 +1112,12 @@ function animate(timestamp) {
       switch (moves[0]) {
         case "forward": {
           currentLane++;
-          counterDOM.innerHTML = currentLane;
+          counterDOM.innerHTML = currentLane + coinCount;
           break;
         }
         case "backward": {
           currentLane--;
-          counterDOM.innerHTML = currentLane;
+          counterDOM.innerHTML = currentLane + coinCount;
           break;
         }
         case "left": {
@@ -1036,23 +1136,52 @@ function animate(timestamp) {
   }
 
   // Hit test
-  if (
-    lanes[currentLane].type === "car" ||
-    lanes[currentLane].type === "truck" ||
-    lanes[currentLane].type === "newhavenline"
-  ) {
-    const chickenMinX = chicken.position.x - (chickenSize * zoom) / 2;
-    const chickenMaxX = chicken.position.x + (chickenSize * zoom) / 2;
-    const vechicleLength = { car: 20, truck: 20, newhavenline: 20 }[
-      lanes[currentLane].type
-    ];
-    lanes[currentLane].vechicles.forEach((vechicle) => {
-      const carMinX = vechicle.position.x - (vechicleLength * zoom) / 2;
-      const carMaxX = vechicle.position.x + (vechicleLength * zoom) / 2;
-      if (chickenMaxX > carMinX && chickenMinX < carMaxX) {
-        endDOM.style.visibility = "visible";
-      }
-    });
+  if (!godMode) {
+    if (
+      lanes[currentLane].type === "car" ||
+      lanes[currentLane].type === "truck" ||
+      lanes[currentLane].type === "newhavenline"
+    ) {
+      const chickenMinX = chicken.position.x - (chickenSize * zoom) / 2;
+      const chickenMaxX = chicken.position.x + (chickenSize * zoom) / 2;
+      const vechicleLength = { car: 20, truck: 20, newhavenline: 20 }[
+        lanes[currentLane].type
+      ];
+      lanes[currentLane].vechicles.forEach((vechicle) => {
+        const carMinX = vechicle.position.x - (vechicleLength * zoom) / 2;
+        const carMaxX = vechicle.position.x + (vechicleLength * zoom) / 2;
+        if (chickenMaxX > carMinX && chickenMinX < carMaxX) {
+          endDOM.style.visibility = "visible";
+        }
+      });
+      const coinLength = 10;
+      let toRemove = [];
+      lanes[currentLane].coins.forEach((coin) => {
+        const coinMinX = coin.position.x - (coinLength * zoom) / 2;
+        const coinMaxX = coin.position.x + (coinLength * zoom) / 2;
+        if (chickenMaxX > coinMinX && chickenMinX < coinMaxX) {
+          var listener = new THREE.AudioListener();
+          camera.add(listener);
+          Sound = new THREE.Audio(listener);
+          var Loader = new THREE.AudioLoader();
+          Loader.load("sounds/coin.wav", function (buffer) {
+            Sound.setBuffer(buffer);
+            Sound.setLoop(false);
+            Sound.setVolume(0.5);
+            Sound.play();
+          });
+          coinCount = coinCount + 1;
+          lanes[currentLane].mesh.remove(coin);
+          toRemove.push(coin);
+        }
+      });
+      toRemove.forEach((coin) => {
+        lanes[currentLane].coins.splice(
+          lanes[currentLane].coins.indexOf(coin),
+          1
+        );
+      });
+    }
   }
   renderer.render(scene, camera);
 }

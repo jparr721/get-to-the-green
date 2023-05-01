@@ -71,6 +71,31 @@ button {
     font-size: inherit;
 }
 
+#endcredit {
+    background-image: url("winbg.png");
+    background-size: cover;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+}
+
+#win {
+    position: absolute;
+    min-width: 100%;
+    min-height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    visibility: hidden;
+}
+
+#win button {
+    font-family: inherit;
+    font-size: inherit;
+}
+
 #title {
     background-image: url("bg.png");
     background-size: cover;
