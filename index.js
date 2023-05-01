@@ -5,7 +5,12 @@ const endDOM = document.getElementById("end");
 const startDOM = document.getElementById("start");
 const winDOM = document.getElementById("win");
 let gameStopped = true;
-let godMode = true;
+
+let sound_playing = false;
+let godMode = false;
+
+//audio
+let soundtrack1;
 
 const scene = new THREE.Scene();
 
@@ -58,6 +63,13 @@ function initCamera() {
   camera.position.y = initialCameraPositionY;
   camera.position.x = initialCameraPositionX;
   camera.position.z = distance;
+
+  let audioL = camera.children.filter((child) => {
+    return child instanceof THREE.AudioListener;
+  });
+  for (const a of audioL) {
+    camera.remove(a);
+  }
 }
 initCamera();
 
@@ -206,6 +218,19 @@ const initializeValues = () => {
   frustum = new THREE.Frustum();
   cameraViewProjectionMatrix = new THREE.Matrix4();
   initCamera();
+  if (!sound_playing) {
+    var listener = new THREE.AudioListener();
+    camera.add(listener);
+    soundtrack1 = new THREE.Audio(listener);
+    var Loader = new THREE.AudioLoader();
+    Loader.load("sounds/soundtrack1.mp3", function (buffer) {
+      soundtrack1.setBuffer(buffer);
+      soundtrack1.setLoop(true);
+      soundtrack1.setVolume(0.5);
+      soundtrack1.play();
+    });
+    sound_playing = true;
+  }
 };
 
 initializeValues();
@@ -1089,7 +1114,11 @@ var prevPosition = 0;
 function animate(timestamp) {
   requestAnimationFrame(animate);
 
-  if (gameStopped) return;
+  if (gameStopped) {
+    soundtrack1.stop();
+    sound_playing = false;
+    return;
+  }
 
   if (currentLane >= 101 || currentLane + coinCount >= 201) {
     winDOM.style.visibility = "visible";
@@ -1280,6 +1309,8 @@ function animate(timestamp) {
   frustum.setFromMatrix(cameraViewProjectionMatrix);
   if (!frustum.containsPoint(chicken.position)) {
     gameStopped = true;
+    soundtrack1.stop();
+    sound_playing = false;
     endDOM.style.visibility = "visible";
   }
 
