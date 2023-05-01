@@ -7,7 +7,8 @@ const winDOM = document.getElementById("win");
 let gameStopped = true;
 
 let sound_playing = false;
-let godMode = false;
+let camera_movement_stopped = false;
+let godMode = true;
 
 //audio
 let soundtrack1;
@@ -78,13 +79,13 @@ var cameraViewProjectionMatrix = new THREE.Matrix4();
 
 const zoom = 2;
 
-const chickenSize = 15;
+const player_oneSize = 15;
 
 const positionWidth = 42;
 const columns = 17;
 const boardWidth = positionWidth * columns;
 
-const stepTime = 200; // Miliseconds it takes for the chicken to take a step forward, backward, left or right
+const stepTime = 200; // Miliseconds it takes for the player_one to take a step forward, backward, left or right
 
 let lanes;
 let currentLane;
@@ -158,8 +159,8 @@ function YaleBuilding() {
   scene.add(new building());
 }
 
-const chicken = new Chicken();
-scene.add(chicken);
+const player_one = new PlayerOne();
+scene.add(player_one);
 
 hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
 scene.add(hemiLight);
@@ -169,7 +170,7 @@ const initialDirLightPositionY = -100;
 dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
 dirLight.position.set(initialDirLightPositionX, initialDirLightPositionY, 200);
 dirLight.castShadow = true;
-dirLight.target = chicken;
+dirLight.target = player_one;
 scene.add(dirLight);
 
 dirLight.shadow.mapSize.width = 2048;
@@ -203,8 +204,8 @@ const initializeValues = () => {
   moves = [];
   stepStartTimestamp;
 
-  chicken.position.x = 0;
-  chicken.position.y = 0;
+  player_one.position.x = 0;
+  player_one.position.y = 0;
 
   camera.position.y = initialCameraPositionY;
   camera.position.x = initialCameraPositionX;
@@ -223,7 +224,7 @@ const initializeValues = () => {
     camera.add(listener);
     soundtrack1 = new THREE.Audio(listener);
     var Loader = new THREE.AudioLoader();
-    Loader.load("sounds/soundtrack1.mp3", function (buffer) {
+    Loader.load("sounds/soundtrack2.mp3", function (buffer) {
       soundtrack1.setBuffer(buffer);
       soundtrack1.setLoop(true);
       soundtrack1.setVolume(0.5);
@@ -374,7 +375,7 @@ function VanderbiltHall() {
   building.add(roof);
 
   building.position.x = Math.random() > 0.5 ? -boardWidth : boardWidth;
-  building.position.y = chicken.position.y;
+  building.position.y = player_one.position.y;
 
   return building;
 }
@@ -406,11 +407,12 @@ function GlobalAffairs() {
   building.add(main);
 
   building.position.x = Math.random() > 0.5 ? -boardWidth : boardWidth;
-  building.position.y = chicken.position.y;
+  building.position.y = player_one.position.y;
   return building;
 }
 
 function SOM() {
+  //change to SOM
   const textureLoader = new THREE.TextureLoader();
   const texture = textureLoader.load("SOM.png");
   texture.wrapS = THREE.RepeatWrapping;
@@ -437,7 +439,39 @@ function SOM() {
   building.add(main);
 
   building.position.x = Math.random() > 0.5 ? -boardWidth : boardWidth;
-  building.position.y = chicken.position.y;
+  building.position.y = player_one.position.y;
+  return building;
+}
+
+function NHG() {
+  const textureLoader = new THREE.TextureLoader();
+  const texture = textureLoader.load("nhgtxt.jpg");
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(1, 1);
+
+  // Create the main group for the building
+  var building = new THREE.Group();
+
+  // Define the size and shape of the building
+
+  var width = boardWidth * zoom;
+  var height = boardWidth * zoom;
+  var depth = 10 * zoom;
+
+  // Create the main part of the building
+  var mainGeometry = new THREE.BoxGeometry(width, height, depth);
+  var mainMaterial = new THREE.MeshPhongMaterial({
+    color: 0xffffff,
+    map: texture,
+  });
+  var main = new THREE.Mesh(mainGeometry, mainMaterial);
+  main.position.y = depth + height / 2;
+  main.position.z = 0;
+  building.add(main);
+
+  building.position.x = 0;
+  building.position.y = player_one.position.y - (boardWidth/3);
   return building;
 }
 
@@ -498,7 +532,7 @@ function SchwarzmannCenter() {
   building.add(roof);
 
   building.position.x = Math.random() > 0.5 ? -boardWidth : boardWidth;
-  building.position.y = chicken.position.y;
+  building.position.y = player_one.position.y;
 
   return building;
 }
@@ -572,7 +606,7 @@ function Train() {
 }
 
 function Professor() {
-  const chicken = new THREE.Group();
+  const player_one = new THREE.Group();
 
   const rightLeg = new THREE.Mesh(
     new THREE.BoxBufferGeometry(5 * zoom, 5 * zoom, 12 * zoom),
@@ -582,7 +616,7 @@ function Professor() {
   rightLeg.position.x = 4 * zoom;
   rightLeg.castShadow = true;
   rightLeg.receiveShadow = true;
-  chicken.add(rightLeg);
+  player_one.add(rightLeg);
 
   const leftLeg = new THREE.Mesh(
     new THREE.BoxBufferGeometry(5 * zoom, 5 * zoom, 12 * zoom),
@@ -592,7 +626,7 @@ function Professor() {
   leftLeg.position.x = -4 * zoom;
   leftLeg.castShadow = true;
   leftLeg.receiveShadow = true;
-  chicken.add(leftLeg);
+  player_one.add(leftLeg);
 
   const body = new THREE.Mesh(
     new THREE.BoxBufferGeometry(15 * zoom, 9 * zoom, 18 * zoom),
@@ -604,7 +638,7 @@ function Professor() {
   body.position.z = 22 * zoom;
   body.castShadow = true;
   body.receiveShadow = true;
-  chicken.add(body);
+  player_one.add(body);
 
   const armColor = getRandomSkinToneColor();
   const leftArm = new THREE.Mesh(
@@ -615,7 +649,7 @@ function Professor() {
   leftArm.position.x = -9 * zoom;
   leftArm.castShadow = true;
   leftArm.receiveShadow = true;
-  chicken.add(leftArm);
+  player_one.add(leftArm);
 
   const rightArm = new THREE.Mesh(
     new THREE.BoxBufferGeometry(4 * zoom, 4 * zoom, 11 * zoom),
@@ -625,7 +659,7 @@ function Professor() {
   rightArm.position.x = 9 * zoom;
   rightArm.castShadow = true;
   rightArm.receiveShadow = true;
-  chicken.add(rightArm);
+  player_one.add(rightArm);
 
   // Gray color
   const gray = 0x808080;
@@ -648,9 +682,9 @@ function Professor() {
   head.position.z = 34 * zoom;
   head.castShadow = true;
   head.receiveShadow = false;
-  chicken.add(head);
+  player_one.add(head);
 
-  return chicken;
+  return player_one;
 }
 
 function Tree() {
@@ -679,8 +713,8 @@ function Tree() {
   return tree;
 }
 
-function Chicken() {
-  const chicken = new THREE.Group();
+function PlayerOne() {
+  const player_one = new THREE.Group();
 
   const rightLeg = new THREE.Mesh(
     new THREE.BoxBufferGeometry(5 * zoom, 5 * zoom, 12 * zoom),
@@ -690,7 +724,7 @@ function Chicken() {
   rightLeg.position.x = 4 * zoom;
   rightLeg.castShadow = true;
   rightLeg.receiveShadow = true;
-  chicken.add(rightLeg);
+  player_one.add(rightLeg);
 
   const leftLeg = new THREE.Mesh(
     new THREE.BoxBufferGeometry(5 * zoom, 5 * zoom, 12 * zoom),
@@ -700,7 +734,7 @@ function Chicken() {
   leftLeg.position.x = -4 * zoom;
   leftLeg.castShadow = true;
   leftLeg.receiveShadow = true;
-  chicken.add(leftLeg);
+  player_one.add(leftLeg);
 
   const body = new THREE.Mesh(
     new THREE.BoxBufferGeometry(15 * zoom, 9 * zoom, 18 * zoom),
@@ -712,7 +746,7 @@ function Chicken() {
   body.position.z = 22 * zoom;
   body.castShadow = true;
   body.receiveShadow = true;
-  chicken.add(body);
+  player_one.add(body);
 
   const armColor = getRandomSkinToneColor();
   const leftArm = new THREE.Mesh(
@@ -723,7 +757,7 @@ function Chicken() {
   leftArm.position.x = -9 * zoom;
   leftArm.castShadow = true;
   leftArm.receiveShadow = true;
-  chicken.add(leftArm);
+  player_one.add(leftArm);
 
   const rightArm = new THREE.Mesh(
     new THREE.BoxBufferGeometry(4 * zoom, 4 * zoom, 11 * zoom),
@@ -733,7 +767,7 @@ function Chicken() {
   rightArm.position.x = 9 * zoom;
   rightArm.castShadow = true;
   rightArm.receiveShadow = true;
-  chicken.add(rightArm);
+  player_one.add(rightArm);
 
   // Random number in the range 8-16
   const headSize = Math.floor(Math.random() * 8 + 8) * zoom;
@@ -755,9 +789,9 @@ function Chicken() {
   head.position.z = 34 * zoom;
   head.castShadow = true;
   head.receiveShadow = false;
-  chicken.add(head);
+  player_one.add(head);
 
-  return chicken;
+  return player_one;
 }
 
 function Road() {
@@ -957,7 +991,7 @@ function Lane(index) {
 
       const occupiedPositions = new Set();
       this.vechicles = [1, 2, 3].map(() => {
-        const vechicle = new Chicken();
+        const vechicle = new PlayerOne();
         let position;
         do {
           position = Math.floor((Math.random() * columns) / 2);
@@ -1121,24 +1155,32 @@ function animate(timestamp) {
   }
 
   if (currentLane >= 101 || currentLane + coinCount >= 201) {
-    winDOM.style.visibility = "visible";
-    return;
+    // winDOM.style.visibility = "visible";
+
+    if (!camera_movement_stopped) {
+      lanes.forEach((lane) => scene.remove(lane.mesh));
+      scene.add(new NHG());
+      camera_movement_stopped = true;
+    }
+
+    //return;
   }
 
   if (!previousTimestamp) previousTimestamp = timestamp;
   const delta = timestamp - previousTimestamp;
   previousTimestamp = timestamp;
-
-  var proj = toScreenPosition(chicken, camera);
-  if (proj.y < 0.3 * renderer.context.canvas.height)
-    camera.position.y = camera.position.y + 8;
-  else if (proj.y < 0.4 * renderer.context.canvas.height)
-    camera.position.y = camera.position.y + 4;
-  else if (proj.y < 0.5 * renderer.context.canvas.height)
-    camera.position.y = camera.position.y + 2;
-  else camera.position.y = camera.position.y + 1;
-  if ((camera.position.y - initialCameraPositionY) % 80 >= 79) {
-    addLane();
+  if (!camera_movement_stopped) {
+    var proj = toScreenPosition(player_one, camera);
+    if (proj.y < 0.3 * renderer.context.canvas.height)
+      camera.position.y = camera.position.y + 8;
+    else if (proj.y < 0.4 * renderer.context.canvas.height)
+      camera.position.y = camera.position.y + 4;
+    else if (proj.y < 0.5 * renderer.context.canvas.height)
+      camera.position.y = camera.position.y + 2;
+    else camera.position.y = camera.position.y + 1;
+    if ((camera.position.y - initialCameraPositionY) % 80 >= 79) {
+      addLane();
+    }
   }
 
   // Animate cars and trucks moving on the lane
@@ -1184,17 +1226,24 @@ function animate(timestamp) {
         const positionY =
           currentLane * positionWidth * zoom + moveDeltaDistance;
         dirLight.position.y = initialDirLightPositionY + positionY;
-        chicken.position.y = positionY; // initial chicken position is 0
+        player_one.position.y = positionY; // initial player_one position is 0
+        if(camera_movement_stopped){
+          camera.position.y = initialCameraPositionY +positionY;
+        }
 
-        chicken.position.z = jumpDeltaDistance;
+        player_one.position.z = jumpDeltaDistance;
         break;
       }
       case "backward": {
         positionY = currentLane * positionWidth * zoom - moveDeltaDistance;
-        dirLight.position.y = initialDirLightPositionY + positionY;
-        chicken.position.y = positionY;
+        if(camera_movement_stopped){
+          camera.position.y = initialCameraPositionY +positionY;
+        }
 
-        chicken.position.z = jumpDeltaDistance;
+        dirLight.position.y = initialDirLightPositionY + positionY;
+        player_one.position.y = positionY;
+
+        player_one.position.z = jumpDeltaDistance;
         break;
       }
       case "left": {
@@ -1204,8 +1253,8 @@ function animate(timestamp) {
           moveDeltaDistance;
         camera.position.x = initialCameraPositionX + positionX;
         dirLight.position.x = initialDirLightPositionX + positionX;
-        chicken.position.x = positionX; // initial chicken position is 0
-        chicken.position.z = jumpDeltaDistance;
+        player_one.position.x = positionX; // initial player_one position is 0
+        player_one.position.z = jumpDeltaDistance;
         break;
       }
       case "right": {
@@ -1215,9 +1264,9 @@ function animate(timestamp) {
           moveDeltaDistance;
         camera.position.x = initialCameraPositionX + positionX;
         dirLight.position.x = initialDirLightPositionX + positionX;
-        chicken.position.x = positionX;
+        player_one.position.x = positionX;
 
-        chicken.position.z = jumpDeltaDistance;
+        player_one.position.z = jumpDeltaDistance;
         break;
       }
     }
@@ -1256,15 +1305,17 @@ function animate(timestamp) {
       lanes[currentLane].type === "truck" ||
       lanes[currentLane].type === "newhavenline"
     ) {
-      const chickenMinX = chicken.position.x - (chickenSize * zoom) / 2;
-      const chickenMaxX = chicken.position.x + (chickenSize * zoom) / 2;
+      const player_oneMinX =
+        player_one.position.x - (player_oneSize * zoom) / 2;
+      const player_oneMaxX =
+        player_one.position.x + (player_oneSize * zoom) / 2;
       const vechicleLength = { car: 20, truck: 20, newhavenline: 20 }[
         lanes[currentLane].type
       ];
       lanes[currentLane].vechicles.forEach((vechicle) => {
         const carMinX = vechicle.position.x - (vechicleLength * zoom) / 2;
         const carMaxX = vechicle.position.x + (vechicleLength * zoom) / 2;
-        if (chickenMaxX > carMinX && chickenMinX < carMaxX) {
+        if (player_oneMaxX > carMinX && player_oneMinX < carMaxX) {
           endDOM.style.visibility = "visible";
         }
       });
@@ -1273,7 +1324,7 @@ function animate(timestamp) {
       lanes[currentLane].coins.forEach((coin) => {
         const coinMinX = coin.position.x - (coinLength * zoom) / 2;
         const coinMaxX = coin.position.x + (coinLength * zoom) / 2;
-        if (chickenMaxX > coinMinX && chickenMinX < coinMaxX) {
+        if (player_oneMaxX > coinMinX && player_oneMinX < coinMaxX) {
           var listener = new THREE.AudioListener();
           camera.add(listener);
           Sound = new THREE.Audio(listener);
@@ -1298,7 +1349,7 @@ function animate(timestamp) {
     }
   }
 
-  // CHANGE CAMERA TO MOVE WITH CHICKEN
+  // CHANGE CAMERA TO MOVE WITH player_one
   // every time the camera or objects change position (or every frame)
   camera.updateMatrixWorld(); // make sure the camera matrix is updated
   camera.matrixWorldInverse.getInverse(camera.matrixWorld);
@@ -1307,7 +1358,7 @@ function animate(timestamp) {
     camera.matrixWorldInverse
   );
   frustum.setFromMatrix(cameraViewProjectionMatrix);
-  if (!frustum.containsPoint(chicken.position)) {
+  if (!frustum.containsPoint(player_one.position)) {
     gameStopped = true;
     soundtrack1.stop();
     sound_playing = false;
