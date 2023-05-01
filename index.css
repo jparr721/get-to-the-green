@@ -21,6 +21,20 @@ button {
     color: black;
 }
 
+#timer {
+    position: absolute;
+    top: 20px;
+    right: 150px;
+    color: black;
+}
+
+#sight-seer {
+    position: absolute;
+    top: 60px;
+    right: 550px;
+    color: whitesmoke;
+}
+
 #end {
     position: absolute;
     min-width: 100%;

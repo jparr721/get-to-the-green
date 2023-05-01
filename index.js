@@ -1,14 +1,31 @@
 const counterDOM = document.getElementById("counter");
+const timerDOM = document.getElementById("timer");
+const sightSeerDOM = document.getElementById("sight-seer");
 const endDOM = document.getElementById("end");
 const startDOM = document.getElementById("start");
 const winDOM = document.getElementById("win");
-let gameStopped = false;
+let gameStopped = true;
 let godMode = true;
 
 const scene = new THREE.Scene();
 
+// Timer lasting one minute updating every second
+let timeLeft = 10;
+let timer = setInterval(() => {
+  if (timeLeft > 0) {
+    timeLeft--;
+    timerDOM.innerHTML = `Time Til Spring Fling: ${timeLeft}`;
+  } else {
+    clearInterval(timer);
+    endDOM.style.visibility = "visible";
+  }
+}, 1000);
+
+let buildingsAddedFor = [];
+let allBuildings = [VanderbiltHall, SchwarzmannCenter, GlobalAffairs, SOM];
+
 const distance = 500;
-const camera = new THREE.OrthographicCamera(
+let camera = new THREE.OrthographicCamera(
   window.innerWidth / -2,
   window.innerWidth / 2,
   window.innerHeight / 2,
@@ -21,13 +38,31 @@ camera.rotation.x = (50 * Math.PI) / 180;
 camera.rotation.y = (20 * Math.PI) / 180;
 camera.rotation.z = (10 * Math.PI) / 180;
 
-const initialCameraPositionY = -Math.tan(camera.rotation.x) * distance;
-const initialCameraPositionX =
+let initialCameraPositionY = -Math.tan(camera.rotation.x) * distance;
+let initialCameraPositionX =
   Math.tan(camera.rotation.y) *
   Math.sqrt(distance ** 2 + initialCameraPositionY ** 2);
 camera.position.y = initialCameraPositionY;
 camera.position.x = initialCameraPositionX;
 camera.position.z = distance;
+
+function initCamera() {
+  camera.rotation.x = (50 * Math.PI) / 180;
+  camera.rotation.y = (20 * Math.PI) / 180;
+  camera.rotation.z = (10 * Math.PI) / 180;
+
+  initialCameraPositionY = -Math.tan(camera.rotation.x) * distance;
+  initialCameraPositionX =
+    Math.tan(camera.rotation.y) *
+    Math.sqrt(distance ** 2 + initialCameraPositionY ** 2);
+  camera.position.y = initialCameraPositionY;
+  camera.position.x = initialCameraPositionX;
+  camera.position.z = distance;
+}
+initCamera();
+
+var frustum = new THREE.Frustum();
+var cameraViewProjectionMatrix = new THREE.Matrix4();
 
 const zoom = 2;
 
@@ -88,15 +123,21 @@ const addLane = () => {
   lanes.push(lane);
 };
 
-const allBuildings = [VanderbiltHall, SchwarzmannCenter, GlobalAffairs, SOM];
-
 function YaleBuilding() {
   if (allBuildings.length === 0) {
-    return new SOM();
+    scene.add(new SOM());
   }
 
   const index = Math.floor(Math.random() * allBuildings.length);
   const building = allBuildings[index];
+
+  // Add text to sight-seer div with building.name and have it go away after 3 seconds
+  sightSeerDOM.innerHTML = `Just passed ${building.name}!`;
+  sightSeerDOM.style.visibility = "visible";
+  setTimeout(() => {
+    sightSeerDOM.style.visibility = "hidden";
+  }, 3000);
+
   console.log("ADDING BUILDING: ", building.name);
 
   // Remove the building from the list
@@ -158,6 +199,13 @@ const initializeValues = () => {
 
   dirLight.position.x = initialDirLightPositionX;
   dirLight.position.y = initialDirLightPositionY;
+  gameStopped = false;
+  timeLeft = 60;
+  buildingsAddedFor = [];
+  allBuildings = [VanderbiltHall, SchwarzmannCenter, GlobalAffairs, SOM];
+  frustum = new THREE.Frustum();
+  cameraViewProjectionMatrix = new THREE.Matrix4();
+  initCamera();
 };
 
 initializeValues();
@@ -791,8 +839,6 @@ function NewHavenLine() {
   return newHavenLine;
 }
 
-let buildingsAddedFor = [];
-
 function Lane(index) {
   this.index = index;
   this.type =
@@ -1019,8 +1065,31 @@ function move(direction) {
   moves.push(direction);
 }
 
+function toScreenPosition(obj, camera) {
+  var vector = new THREE.Vector3();
+
+  var widthHalf = 0.5 * renderer.context.canvas.width;
+  var heightHalf = 0.5 * renderer.context.canvas.height;
+
+  obj.updateMatrixWorld();
+  vector.setFromMatrixPosition(obj.matrixWorld);
+  vector.project(camera);
+
+  vector.x = vector.x * widthHalf + widthHalf;
+  vector.y = -(vector.y * heightHalf) + heightHalf;
+
+  return {
+    x: vector.x,
+    y: vector.y,
+  };
+}
+
+var prevPosition = 0;
+
 function animate(timestamp) {
   requestAnimationFrame(animate);
+
+  if (gameStopped) return;
 
   if (currentLane >= 101 || currentLane + coinCount >= 201) {
     winDOM.style.visibility = "visible";
@@ -1030,6 +1099,18 @@ function animate(timestamp) {
   if (!previousTimestamp) previousTimestamp = timestamp;
   const delta = timestamp - previousTimestamp;
   previousTimestamp = timestamp;
+
+  var proj = toScreenPosition(chicken, camera);
+  if (proj.y < 0.3 * renderer.context.canvas.height)
+    camera.position.y = camera.position.y + 8;
+  else if (proj.y < 0.4 * renderer.context.canvas.height)
+    camera.position.y = camera.position.y + 4;
+  else if (proj.y < 0.5 * renderer.context.canvas.height)
+    camera.position.y = camera.position.y + 2;
+  else camera.position.y = camera.position.y + 1;
+  if ((camera.position.y - initialCameraPositionY) % 80 >= 79) {
+    addLane();
+  }
 
   // Animate cars and trucks moving on the lane
   lanes.forEach((lane) => {
@@ -1073,7 +1154,6 @@ function animate(timestamp) {
       case "forward": {
         const positionY =
           currentLane * positionWidth * zoom + moveDeltaDistance;
-        camera.position.y = initialCameraPositionY + positionY;
         dirLight.position.y = initialDirLightPositionY + positionY;
         chicken.position.y = positionY; // initial chicken position is 0
 
@@ -1082,7 +1162,6 @@ function animate(timestamp) {
       }
       case "backward": {
         positionY = currentLane * positionWidth * zoom - moveDeltaDistance;
-        camera.position.y = initialCameraPositionY + positionY;
         dirLight.position.y = initialDirLightPositionY + positionY;
         chicken.position.y = positionY;
 
@@ -1189,6 +1268,21 @@ function animate(timestamp) {
       });
     }
   }
+
+  // CHANGE CAMERA TO MOVE WITH CHICKEN
+  // every time the camera or objects change position (or every frame)
+  camera.updateMatrixWorld(); // make sure the camera matrix is updated
+  camera.matrixWorldInverse.getInverse(camera.matrixWorld);
+  cameraViewProjectionMatrix.multiplyMatrices(
+    camera.projectionMatrix,
+    camera.matrixWorldInverse
+  );
+  frustum.setFromMatrix(cameraViewProjectionMatrix);
+  if (!frustum.containsPoint(chicken.position)) {
+    gameStopped = true;
+    endDOM.style.visibility = "visible";
+  }
+
   renderer.render(scene, camera);
 }
 
