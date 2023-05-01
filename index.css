@@ -71,7 +71,7 @@ button {
     font-size: inherit;
 }
 
-#endcredit {
+#wincredit {
     background-image: url("winbg.png");
     background-size: cover;
     position: fixed;
@@ -94,6 +94,16 @@ button {
 #win button {
     font-family: inherit;
     font-size: inherit;
+}
+
+#wincredit button {
+    background-color: transparent;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
 }
 
 #title {

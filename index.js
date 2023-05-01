@@ -3,7 +3,7 @@ const endDOM = document.getElementById("end");
 const startDOM = document.getElementById("start");
 const winDOM = document.getElementById("win");
 let gameStopped = false;
-let godMode = false;
+let godMode = true;
 
 const scene = new THREE.Scene();
 
@@ -963,6 +963,12 @@ document.querySelector("#start").addEventListener("click", () => {
   startDOM.style.visibility = "hidden";
 });
 
+document.querySelector("#win").addEventListener("click", () => {
+  lanes.forEach((lane) => scene.remove(lane.mesh));
+  initializeValues();
+  winDOM.style.visibility = "hidden";
+});
+
 document.querySelector("#end").addEventListener("click", () => {
   lanes.forEach((lane) => scene.remove(lane.mesh));
   initializeValues();
@@ -1017,7 +1023,7 @@ function animate(timestamp) {
   requestAnimationFrame(animate);
 
   if (currentLane >= 101 || currentLane + coinCount >= 201) {
-    endDOM.style.visibility = "visible";
+    winDOM.style.visibility = "visible";
     return;
   }
 
