@@ -7,13 +7,22 @@ const winDOM = document.getElementById("win");
 let gameStopped = true;
 
 let sound_playing = false;
+let soundtrack_listener = new THREE.AudioListener();
+
+var listener = new THREE.AudioListener();
+
+var Loader = new THREE.AudioLoader();
+
 let camera_movement_stopped = false;
-let godMode = true;
+let godMode = false;
 
 //audio
 let soundtrack1;
 
 const scene = new THREE.Scene();
+
+//end timer @enoch
+let end_timer = new THREE.Clock(true);
 
 // Timer lasting one minute updating every second
 let timeLeft = 10;
@@ -88,6 +97,7 @@ const boardWidth = positionWidth * columns;
 const stepTime = 200; // Miliseconds it takes for the player_one to take a step forward, backward, left or right
 
 let lanes;
+let all_buildings = [];
 let currentLane;
 let currentColumn;
 let coinCount = 0;
@@ -129,7 +139,10 @@ const generateLanes = () =>
     .filter((lane) => lane.index >= 0);
 
 const addLane = () => {
-  const index = lanes.length;
+  let index = lanes.length;
+  if (camera_movement_stopped) {
+    index = 2; //if we've won the game, just draw forrest
+  }
   const lane = new Lane(index);
   lane.mesh.position.y = index * positionWidth * zoom;
   scene.add(lane.mesh);
@@ -137,8 +150,10 @@ const addLane = () => {
 };
 
 function YaleBuilding() {
+  let BuildingRecord = new SOM();
   if (allBuildings.length === 0) {
-    scene.add(new SOM());
+    scene.add(BuildingRecord);
+    all_buildings.push(BuildingRecord);
   }
 
   const index = Math.floor(Math.random() * allBuildings.length);
@@ -156,7 +171,9 @@ function YaleBuilding() {
   // Remove the building from the list
   allBuildings.splice(index, 1);
 
-  scene.add(new building());
+  BuildingRecord = new building();
+  scene.add(BuildingRecord);
+  all_buildings.push(BuildingRecord);
 }
 
 const player_one = new PlayerOne();
@@ -188,11 +205,13 @@ scene.add(backLight);
 
 const laneTypes = ["car", "truck", "forest", "newhavenline"];
 const laneSpeeds = [2, 2.5, 3, 4];
-const vechicleColors = [0xa52523, 0xbdb638, 0x78b14b];
+const vehicleColors = [0xa52523, 0xbdb638, 0x78b14b];
 const threeHeights = [20, 45, 60];
 
 const initializeValues = () => {
   lanes = generateLanes();
+  end_timer = new THREE.Clock(true);
+  
 
   currentLane = 0;
   currentColumn = Math.floor(columns / 2);
@@ -207,6 +226,8 @@ const initializeValues = () => {
   player_one.position.x = 0;
   player_one.position.y = 0;
 
+  camera.add(listener);
+
   camera.position.y = initialCameraPositionY;
   camera.position.x = initialCameraPositionX;
 
@@ -220,8 +241,6 @@ const initializeValues = () => {
   cameraViewProjectionMatrix = new THREE.Matrix4();
   initCamera();
   if (!sound_playing) {
-    var listener = new THREE.AudioListener();
-    camera.add(listener);
     soundtrack1 = new THREE.Audio(listener);
     var Loader = new THREE.AudioLoader();
     Loader.load("sounds/soundtrack2.mp3", function (buffer) {
@@ -471,7 +490,7 @@ function NHG() {
   building.add(main);
 
   building.position.x = 0;
-  building.position.y = player_one.position.y - (boardWidth/3);
+  building.position.y = player_one.position.y - boardWidth / 3;
   return building;
 }
 
@@ -933,19 +952,19 @@ function Lane(index) {
       this.direction = Math.random() >= 0.5;
 
       const occupiedPositions = new Set();
-      this.vechicles = [1, 2].map(() => {
-        const vechicle = new Train();
+      this.vehicles = [1, 2].map(() => {
+        const vehicle = new Train();
         let position;
         do {
           position = Math.floor((Math.random() * columns) / 3);
         } while (occupiedPositions.has(position));
         occupiedPositions.add(position);
-        vechicle.position.x =
+        vehicle.position.x =
           (position * positionWidth * 3 + positionWidth / 2) * zoom -
           (boardWidth * zoom) / 2;
-        if (!this.direction) vechicle.rotation.z = Math.PI;
-        this.mesh.add(vechicle);
-        return vechicle;
+        if (!this.direction) vehicle.rotation.z = Math.PI;
+        this.mesh.add(vehicle);
+        return vehicle;
       });
 
       this.coins = [1, 2].map(() => {
@@ -990,19 +1009,19 @@ function Lane(index) {
       this.direction = Math.random() >= 0.5;
 
       const occupiedPositions = new Set();
-      this.vechicles = [1, 2, 3].map(() => {
-        const vechicle = new PlayerOne();
+      this.vehicles = [1, 2, 3].map(() => {
+        const vehicle = new PlayerOne();
         let position;
         do {
           position = Math.floor((Math.random() * columns) / 2);
         } while (occupiedPositions.has(position));
         occupiedPositions.add(position);
-        vechicle.position.x =
+        vehicle.position.x =
           (position * positionWidth * 2 + positionWidth / 2) * zoom -
           (boardWidth * zoom) / 2;
-        if (!this.direction) vechicle.rotation.z = Math.PI;
-        this.mesh.add(vechicle);
-        return vechicle;
+        if (!this.direction) vehicle.rotation.z = Math.PI;
+        this.mesh.add(vehicle);
+        return vehicle;
       });
       this.coins = [1, 2].map(() => {
         const coin = new Coin();
@@ -1027,19 +1046,19 @@ function Lane(index) {
       this.direction = Math.random() >= 0.5;
 
       const occupiedPositions = new Set();
-      this.vechicles = [1, 2].map(() => {
-        const vechicle = new Professor();
+      this.vehicles = [1, 2].map(() => {
+        const vehicle = new Professor();
         let position;
         do {
           position = Math.floor((Math.random() * columns) / 3);
         } while (occupiedPositions.has(position));
         occupiedPositions.add(position);
-        vechicle.position.x =
+        vehicle.position.x =
           (position * positionWidth * 3 + positionWidth / 2) * zoom -
           (boardWidth * zoom) / 2;
-        if (!this.direction) vechicle.rotation.z = Math.PI;
-        this.mesh.add(vechicle);
-        return vechicle;
+        if (!this.direction) vehicle.rotation.z = Math.PI;
+        this.mesh.add(vehicle);
+        return vehicle;
       });
       this.coins = [1, 2].map(() => {
         const coin = new Coin();
@@ -1154,13 +1173,36 @@ function animate(timestamp) {
     return;
   }
 
-  if (currentLane >= 101 || currentLane + coinCount >= 201) {
-    // winDOM.style.visibility = "visible";
+  if (currentLane >= 101) {
+    clearInterval(timer);
+    soundtrack1.stop();
+    godMode = true;
+    //winning condition @enoch
 
     if (!camera_movement_stopped) {
-      lanes.forEach((lane) => scene.remove(lane.mesh));
+      end_timer.start();
+      lanes.forEach((lane) => {
+        let x = lane.mesh.positionX;
+        let y = lane.mesh.positionY;
+        scene.remove(lane.mesh);
+        let new_g = new Grass();
+        new_g.positionX = x;
+        new_g.positionY = y;
+        scene.add(new_g);
+      });
+      all_buildings.forEach((b) => scene.remove(b));
       scene.add(new NHG());
       camera_movement_stopped = true;
+    }
+    timerDOM.innerHTML = "WELCOME TO THE NEW HAVEN GREEN";
+  sightSeerDOM.innerHTML = "HOORAY! THANKS FOR A GREAT SEMESTER :)";
+
+
+    if (end_timer.getDelta > 30) {
+      endDOM.style.visibility = "visible";
+      alert("YOU WON!");
+      winDOM.style.visibility = "visible";
+      return;
     }
 
     //return;
@@ -1194,17 +1236,17 @@ function animate(timestamp) {
         (-boardWidth * zoom) / 2 - positionWidth * 2 * zoom;
       const aBitAfterTheEndOFLane =
         (boardWidth * zoom) / 2 + positionWidth * 2 * zoom;
-      lane.vechicles.forEach((vechicle) => {
+      lane.vehicles.forEach((vehicle) => {
         if (lane.direction) {
-          vechicle.position.x =
-            vechicle.position.x < aBitBeforeTheBeginingOfLane
+          vehicle.position.x =
+            vehicle.position.x < aBitBeforeTheBeginingOfLane
               ? aBitAfterTheEndOFLane
-              : (vechicle.position.x -= (lane.speed / 16) * delta);
+              : (vehicle.position.x -= (lane.speed / 16) * delta);
         } else {
-          vechicle.position.x =
-            vechicle.position.x > aBitAfterTheEndOFLane
+          vehicle.position.x =
+            vehicle.position.x > aBitAfterTheEndOFLane
               ? aBitBeforeTheBeginingOfLane
-              : (vechicle.position.x += (lane.speed / 16) * delta);
+              : (vehicle.position.x += (lane.speed / 16) * delta);
         }
       });
     }
@@ -1227,8 +1269,8 @@ function animate(timestamp) {
           currentLane * positionWidth * zoom + moveDeltaDistance;
         dirLight.position.y = initialDirLightPositionY + positionY;
         player_one.position.y = positionY; // initial player_one position is 0
-        if(camera_movement_stopped){
-          camera.position.y = initialCameraPositionY +positionY;
+        if (camera_movement_stopped) {
+          camera.position.y = initialCameraPositionY + positionY;
         }
 
         player_one.position.z = jumpDeltaDistance;
@@ -1236,8 +1278,8 @@ function animate(timestamp) {
       }
       case "backward": {
         positionY = currentLane * positionWidth * zoom - moveDeltaDistance;
-        if(camera_movement_stopped){
-          camera.position.y = initialCameraPositionY +positionY;
+        if (camera_movement_stopped) {
+          camera.position.y = initialCameraPositionY + positionY;
         }
 
         dirLight.position.y = initialDirLightPositionY + positionY;
@@ -1275,12 +1317,12 @@ function animate(timestamp) {
       switch (moves[0]) {
         case "forward": {
           currentLane++;
-          counterDOM.innerHTML = currentLane + coinCount;
+          counterDOM.innerHTML = coinCount;
           break;
         }
         case "backward": {
           currentLane--;
-          counterDOM.innerHTML = currentLane + coinCount;
+          counterDOM.innerHTML = coinCount;
           break;
         }
         case "left": {
@@ -1309,12 +1351,12 @@ function animate(timestamp) {
         player_one.position.x - (player_oneSize * zoom) / 2;
       const player_oneMaxX =
         player_one.position.x + (player_oneSize * zoom) / 2;
-      const vechicleLength = { car: 20, truck: 20, newhavenline: 20 }[
+      const vehicleLength = { car: 20, truck: 20, newhavenline: 20 }[
         lanes[currentLane].type
       ];
-      lanes[currentLane].vechicles.forEach((vechicle) => {
-        const carMinX = vechicle.position.x - (vechicleLength * zoom) / 2;
-        const carMaxX = vechicle.position.x + (vechicleLength * zoom) / 2;
+      lanes[currentLane].vehicles.forEach((vehicle) => {
+        const carMinX = vehicle.position.x - (vehicleLength * zoom) / 2;
+        const carMaxX = vehicle.position.x + (vehicleLength * zoom) / 2;
         if (player_oneMaxX > carMinX && player_oneMinX < carMaxX) {
           endDOM.style.visibility = "visible";
         }
@@ -1325,10 +1367,7 @@ function animate(timestamp) {
         const coinMinX = coin.position.x - (coinLength * zoom) / 2;
         const coinMaxX = coin.position.x + (coinLength * zoom) / 2;
         if (player_oneMaxX > coinMinX && player_oneMinX < coinMaxX) {
-          var listener = new THREE.AudioListener();
-          camera.add(listener);
-          Sound = new THREE.Audio(listener);
-          var Loader = new THREE.AudioLoader();
+          let Sound = new THREE.Audio(listener);
           Loader.load("sounds/coin.wav", function (buffer) {
             Sound.setBuffer(buffer);
             Sound.setLoop(false);
