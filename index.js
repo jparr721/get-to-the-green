@@ -5,6 +5,7 @@ const endDOM = document.getElementById("end");
 const startDOM = document.getElementById("start");
 const winDOM = document.getElementById("win");
 let gameStopped = true;
+let gamewon = false;
 
 let sound_playing = false;
 let soundtrack_listener = new THREE.AudioListener();
@@ -24,6 +25,8 @@ const scene = new THREE.Scene();
 //end timer @enoch
 let end_timer = new THREE.Clock(true);
 
+let end_time = 30;
+
 // Timer lasting one minute updating every second
 let timeLeft = 10;
 let timer = setInterval(() => {
@@ -35,6 +38,8 @@ let timer = setInterval(() => {
     endDOM.style.visibility = "visible";
   }
 }, 1000);
+
+let game_won_timer;
 
 let buildingsAddedFor = [];
 let allBuildings = [VanderbiltHall, SchwarzmannCenter, GlobalAffairs, SOM];
@@ -209,9 +214,10 @@ const vehicleColors = [0xa52523, 0xbdb638, 0x78b14b];
 const threeHeights = [20, 45, 60];
 
 const initializeValues = () => {
+  coinCount = 0;
+
   lanes = generateLanes();
   end_timer = new THREE.Clock(true);
-  
 
   currentLane = 0;
   currentColumn = Math.floor(columns / 2);
@@ -243,7 +249,7 @@ const initializeValues = () => {
   if (!sound_playing) {
     soundtrack1 = new THREE.Audio(listener);
     var Loader = new THREE.AudioLoader();
-    Loader.load("sounds/soundtrack2.mp3", function (buffer) {
+    Loader.load("sounds/soundtrack1.mp3", function (buffer) {
       soundtrack1.setBuffer(buffer);
       soundtrack1.setLoop(true);
       soundtrack1.setVolume(0.5);
@@ -1178,9 +1184,23 @@ function animate(timestamp) {
     soundtrack1.stop();
     godMode = true;
     //winning condition @enoch
+    let Sound = new THREE.Audio(listener);
 
     if (!camera_movement_stopped) {
-      end_timer.start();
+      Loader.load("sounds/win_sound.mp3", function (buffer) {
+        Sound.setBuffer(buffer);
+        Sound.setLoop(true);
+        Sound.setVolume(0.5);
+        Sound.play();
+      });
+      game_won_timer = setInterval(() => {
+        if (end_time > 0) {
+          end_time--;
+        } else {
+          gamewon = true;
+          clearInterval(game_won_timer);
+        }
+      }, 1000);
       lanes.forEach((lane) => {
         let x = lane.mesh.positionX;
         let y = lane.mesh.positionY;
@@ -1195,13 +1215,15 @@ function animate(timestamp) {
       camera_movement_stopped = true;
     }
     timerDOM.innerHTML = "WELCOME TO THE NEW HAVEN GREEN";
-  sightSeerDOM.innerHTML = "HOORAY! THANKS FOR A GREAT SEMESTER :)";
+    sightSeerDOM.innerHTML = "HOORAY! THANKS FOR A GREAT SEMESTER :)";
 
-
-    if (end_timer.getDelta > 30) {
-      endDOM.style.visibility = "visible";
+    if (gamewon) {
       alert("YOU WON!");
       winDOM.style.visibility = "visible";
+      Sound.stop()
+      gamewon = false;
+      gameStopped = true;
+      clearInterval(game_won_timer);
       return;
     }
 
